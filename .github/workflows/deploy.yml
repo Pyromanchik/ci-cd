@@ -26,3 +26,4 @@ jobs:
             /home/django/django_venv/venv/bin/python manage.py collectstatic --noinput &&
             systemctl restart gunicorn
           "
+# CI/CD Deploy: Sun Jun 28 21:13:31 MSK 2026

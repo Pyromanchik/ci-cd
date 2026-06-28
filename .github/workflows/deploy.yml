@@ -1,0 +1,33 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 80.78.254.40
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/django/django_venv/src
+
+            # Обновляем код
+            git pull origin main
+
+            # Устанавливаем зависимости
+            /home/django/django_venv/venv/bin/pip install -r requirements.txt
+
+            # Миграции и статика
+            /home/django/django_venv/venv/bin/python manage.py migrate --noinput
+            /home/django/django_venv/venv/bin/python manage.py collectstatic --noinput
+
+            # Перезапускаем Gunicorn
+            systemctl restart gunicorn

@@ -10,24 +10,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/github_key
+          chmod 600 ~/.ssh/github_key
+
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: 80.78.254.40
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /home/django/django_venv/src
-
-            # Обновляем код
-            git pull origin main
-
-            # Устанавливаем зависимости
-            /home/django/django_venv/venv/bin/pip install -r requirements.txt
-
-            # Миграции и статика
-            /home/django/django_venv/venv/bin/python manage.py migrate --noinput
-            /home/django/django_venv/venv/bin/python manage.py collectstatic --noinput
-
-            # Перезапускаем Gunicorn
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/github_key root@80.78.254.40 "
+            cd /home/django/django_venv/src &&
+            git pull origin main &&
+            /home/django/django_venv/venv/bin/pip install -r requirements.txt &&
+            /home/django/django_venv/venv/bin/python manage.py migrate --noinput &&
+            /home/django/django_venv/venv/bin/python manage.py collectstatic --noinput &&
             systemctl restart gunicorn
+          "
